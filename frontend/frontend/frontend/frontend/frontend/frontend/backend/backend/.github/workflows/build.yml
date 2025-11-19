@@ -1,0 +1,38 @@
+name: Build Windows EXE
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Install MSYS2
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: UCRT64
+        install: >
+          mingw-w64-ucrt-x86_64-gcc
+          mingw-w64-ucrt-x86_64-curl
+          mingw-w64-ucrt-x86_64-make
+          mingw-w64-ucrt-x86_64-cmake
+
+    - name: Build Backend
+      shell: msys2 {0}
+      run: |
+        cd backend
+        g++ main.cpp firebase.cpp -o server.exe -lcurl
+
+    - name: Zip Project
+      run: powershell Compress-Archive -Path * -DestinationPath patient-system.zip
+
+    - name: Upload ZIP
+      uses: actions/upload-artifact@v3
+      with:
+        name: patient-system
+        path: patient-system.zip
